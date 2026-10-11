@@ -1,0 +1,143 @@
+@let total = store.items().length;
+
+<app-page-header heading="Movimientos">
+  @if (total) {
+    <p class="page-header__meta">
+      <strong>{{ total }}</strong> {{ total === 1 ? 'movimiento' : 'movimientos' }} ·
+      <strong>{{ creditos() }}</strong> {{ creditos() === 1 ? 'crédito' : 'créditos' }} ·
+      <strong>{{ debitos() }}</strong> {{ debitos() === 1 ? 'débito' : 'débitos' }}
+    </p>
+  }
+  <button type="button" class="btn btn--primary" (click)="store.openCreate()">
+    <app-icon name="plus" />
+    Nuevo movimiento
+  </button>
+</app-page-header>
+
+<app-table-panel
+  emptyMessage="No hay movimientos registrados"
+  createLabel="Nuevo movimiento"
+  [total]="total"
+  [matches]="store.visibleItems().length"
+  [loading]="store.loading()"
+  [error]="store.loadError()"
+  (retry)="store.reload()"
+  (clearSearch)="store.query.set('')"
+  (create)="store.openCreate()"
+>
+  <div class="table-toolbar">
+    <app-quick-search
+      label="Buscar movimientos"
+      [(term)]="store.query"
+      [total]="total"
+      [matches]="store.visibleItems().length"
+    />
+  </div>
+
+  <table class="data-table data-table--cards">
+    <caption class="visually-hidden">
+      Listado de movimientos
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Fecha</th>
+        <th scope="col">Número cuenta</th>
+        <th scope="col">Tipo cuenta</th>
+        <th scope="col">Cliente</th>
+        <th scope="col">Tipo movimiento</th>
+        <th scope="col" class="cell-numeric">Valor</th>
+        <th scope="col" class="cell-numeric">Saldo disponible</th>
+        <th scope="col" class="cell-actions">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (movimiento of store.visibleItems(); track movimiento.movimientoId) {
+        @let credito = movimiento.valor > 0;
+        <tr
+          animate.enter="row-enter"
+          [appFlash]="store.highlighted()"
+          [appFlashId]="movimiento.movimientoId"
+        >
+          <td class="text-numeric" data-label="Fecha">
+            {{ movimiento.fecha | date: 'dd/MM/yyyy' }}
+            <span class="cell-muted">{{ movimiento.fecha | date: 'HH:mm' }}</span>
+          </td>
+          <td class="cell-strong text-numeric" data-label="Cuenta">
+            {{ movimiento.numeroCuenta }}
+          </td>
+          <td data-label="Tipo cuenta">{{ tipoCuentaLabels[movimiento.tipoCuenta] }}</td>
+          <td data-label="Cliente">{{ movimiento.cliente }}</td>
+          <td class="cell-title">
+            <span
+              class="movement-type"
+              [class.movement-type--credit]="credito"
+              [class.movement-type--debit]="!credito"
+            >
+              <app-icon [name]="credito ? 'arrow-down-left' : 'arrow-up-right'" />
+              {{ tipoMovimientoLabels[movimiento.tipoMovimiento] }}
+            </span>
+          </td>
+          <td
+            class="cell-numeric cell-strong"
+            data-label="Valor"
+            [class.amount--credit]="movimiento.valor > 0"
+            [class.amount--debit]="movimiento.valor < 0"
+          >
+            {{ movimiento.valor | money: 'signed' }}
+          </td>
+          <td class="cell-numeric" data-label="Saldo">{{ movimiento.saldo | money }}</td>
+          <td class="cell-actions">
+            <div class="row-actions">
+              <button
+                type="button"
+                class="btn btn--icon"
+                title="Editar"
+                [attr.aria-label]="`Editar movimiento de la cuenta ${movimiento.numeroCuenta}`"
+                (click)="store.openEdit(movimiento)"
+              >
+                <app-icon name="edit" />
+              </button>
+              <button
+                type="button"
+                class="btn btn--icon btn--icon-danger"
+                title="Eliminar"
+                [attr.aria-label]="`Eliminar movimiento de la cuenta ${movimiento.numeroCuenta}`"
+                (click)="store.requestDelete(movimiento)"
+              >
+                <app-icon name="trash" />
+              </button>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</app-table-panel>
+
+@if (store.editorOpen()) {
+  <app-modal
+    variant="drawer"
+    [heading]="store.editing() ? 'Editar movimiento' : 'Nuevo movimiento'"
+    (closed)="store.closeEditor()"
+  >
+    <app-movimiento-form
+      [movimiento]="store.editing()"
+      [cuentas]="store.cuentas()"
+      [saving]="store.saving()"
+      [serverError]="store.saveError()"
+      (submitted)="store.save($event)"
+      (cancelled)="store.closeEditor()"
+    />
+  </app-modal>
+}
+
+@if (store.pendingDelete(); as movimiento) {
+  <app-confirm-dialog
+    heading="Eliminar movimiento"
+    [busy]="store.deleting()"
+    (confirmed)="store.confirmDelete()"
+    (cancelled)="store.cancelDelete()"
+  >
+    <p>¿Desea eliminar este movimiento? Se recalcularán los saldos de la cuenta.</p>
+  </app-confirm-dialog>
+}

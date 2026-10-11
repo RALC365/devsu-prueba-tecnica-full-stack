@@ -1,0 +1,220 @@
+@use 'media';
+
+:host {
+  --nav-item-height: 2.75rem;
+  --nav-gap: 0.25rem;
+  --nav-padding: var(--space-3);
+
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.shell__header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  height: var(--header-height);
+  padding: 0 var(--space-6);
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: inline-flex;
+  margin-left: calc(-1 * var(--space-1));
+  padding: var(--space-1);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.shell__body {
+  display: flex;
+  flex: 1;
+}
+
+.shell__nav {
+  position: sticky;
+  top: var(--header-height);
+  flex: 0 0 var(--sidebar-width);
+  align-self: flex-start;
+  height: calc(100vh - var(--header-height));
+  padding: var(--space-4) var(--nav-padding);
+  background-color: rgb(255 255 255 / 72%);
+  border-right: 1px solid var(--line);
+}
+
+.nav {
+  position: relative;
+}
+
+// fondo de la sección activa; se desliza hasta el link elegido
+.nav__indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-item-height);
+  background-color: var(--brand-50);
+  border-radius: var(--radius-md);
+  transform: translateY(
+    calc(var(--active-index, 0) * (var(--nav-item-height) + var(--nav-gap)))
+  );
+  transition: opacity var(--duration-base) ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0.625rem;
+    bottom: 0.625rem;
+    left: calc(-1 * var(--nav-padding));
+    width: 3px;
+    background-color: var(--brand-600);
+    border-radius: 0 3px 3px 0;
+  }
+}
+
+.nav__indicator--hidden {
+  opacity: 0;
+}
+
+.nav__list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nav-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--nav-item-height);
+  padding: 0 0.875rem;
+  font-weight: var(--weight-medium);
+  color: var(--ink-600);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition:
+    color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    font-weight var(--duration-base) ease;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.nav__link--active {
+  font-weight: var(--weight-semibold);
+  color: var(--brand-700);
+}
+
+@include media.hover {
+  .nav__link:not(.nav__link--active):hover {
+    color: var(--ink-950);
+    background-color: rgb(11 27 46 / 4%);
+  }
+}
+
+.nav__icon {
+  font-size: 1.1875rem;
+}
+
+.shell__content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-8) var(--space-10) var(--space-12);
+}
+
+@include media.motion {
+  .nav__indicator {
+    transition:
+      transform var(--duration-slow) var(--ease-in-out),
+      opacity var(--duration-base) ease;
+  }
+}
+
+// en tablet y teléfono el menú pasa a una barra inferior
+@include media.below(media.$tablet) {
+  .shell__header {
+    height: 3.5rem;
+    padding: 0 var(--space-4);
+  }
+
+  .shell__nav {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+    padding: 0 var(--space-2) env(safe-area-inset-bottom);
+    background-color: var(--surface);
+    border-top: 1px solid var(--line);
+    border-right: 0;
+    box-shadow: 0 -8px 24px -16px rgb(11 27 46 / 18%);
+  }
+
+  .nav {
+    height: var(--tabbar-height);
+  }
+
+  .nav__indicator {
+    width: 25%;
+    height: 100%;
+    background-color: transparent;
+    transform: translateX(calc(var(--active-index, 0) * 100%));
+
+    &::before {
+      top: 0;
+      bottom: auto;
+      left: 50%;
+      width: 1.75rem;
+      height: 3px;
+      border-radius: 0 0 3px 3px;
+      transform: translateX(-50%);
+    }
+  }
+
+  .nav__list {
+    flex-direction: row;
+    gap: 0;
+    height: 100%;
+
+    li {
+      flex: 1;
+    }
+  }
+
+  .nav__link {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.1875rem;
+    height: 100%;
+    padding: 0;
+    font-size: var(--text-2xs);
+    border-radius: 0;
+  }
+
+  .nav__icon {
+    font-size: 1.3125rem;
+  }
+
+  .shell__content {
+    padding: var(--space-5) var(--space-4)
+      calc(var(--tabbar-height) + env(safe-area-inset-bottom) + var(--space-8));
+  }
+}

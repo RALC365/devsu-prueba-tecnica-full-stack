@@ -1,0 +1,198 @@
+@let datos = reporte();
+
+<header class="card reporte-header">
+  <div class="reporte-header__who">
+    <p class="reporte-header__eyebrow">Estado de cuenta</p>
+    <h2 class="reporte-header__cliente">{{ datos.cliente }}</h2>
+    <p class="reporte-header__meta">Identificación {{ datos.identificacion }}</p>
+  </div>
+  <dl class="reporte-header__details">
+    <div>
+      <dt>Periodo</dt>
+      <dd>
+        {{ datos.fechaInicio | date: 'dd/MM/yyyy' }} al {{ datos.fechaFin | date: 'dd/MM/yyyy' }}
+      </dd>
+    </div>
+    <div>
+      <dt>Generado</dt>
+      <dd>{{ datos.fechaGeneracion | dateTime }}</dd>
+    </div>
+  </dl>
+  <svg class="reporte-header__mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+    <rect x="8" y="17" width="4.2" height="8" rx="2.1" />
+    <rect x="13.9" y="12.5" width="4.2" height="12.5" rx="2.1" />
+    <rect x="19.8" y="7" width="4.2" height="18" rx="2.1" />
+  </svg>
+</header>
+
+<section class="summary" aria-label="Resumen del periodo">
+  <div class="card summary__item">
+    <span class="summary__icon summary__icon--credit"><app-icon name="arrow-down-left" /></span>
+    <span class="summary__label">Total créditos</span>
+    <strong
+      class="summary__value"
+      [class.summary__value--credit]="datos.totalCreditos > 0"
+      [appCountUp]="datos.totalCreditos"
+      [countUpFormat]="signedMoney"
+    ></strong>
+  </div>
+  <div class="card summary__item">
+    <span class="summary__icon summary__icon--debit"><app-icon name="arrow-up-right" /></span>
+    <span class="summary__label">Total débitos</span>
+    <strong
+      class="summary__value"
+      [class.summary__value--debit]="datos.totalDebitos < 0"
+      [appCountUp]="datos.totalDebitos"
+      [countUpFormat]="signedMoney"
+    ></strong>
+  </div>
+  <div class="card summary__item">
+    <span class="summary__icon"><app-icon name="wallet" /></span>
+    <span class="summary__label">Saldo al corte</span>
+    <strong class="summary__value" [appCountUp]="saldoTotal()" [countUpFormat]="money"></strong>
+  </div>
+  <div class="card summary__item">
+    <span class="summary__icon"><app-icon name="list" /></span>
+    <span class="summary__label">Movimientos</span>
+    <strong class="summary__value" [appCountUp]="datos.movimientos.length"></strong>
+  </div>
+</section>
+
+<section class="card reporte-section" aria-labelledby="reporte-grafico-titulo">
+  <h3 id="reporte-grafico-titulo" class="reporte-section__title">Créditos y débitos por cuenta</h3>
+  <app-reporte-chart [cuentas]="datos.cuentas" />
+</section>
+
+<section class="reporte-section reporte-section--plain" aria-labelledby="reporte-cuentas-titulo">
+  <h3 id="reporte-cuentas-titulo" class="reporte-section__title">Cuentas</h3>
+  <app-table-panel
+    emptyMessage="El cliente no tiene cuentas"
+    [total]="datos.cuentas.length"
+    [matches]="datos.cuentas.length"
+  >
+    <table class="data-table data-table--cards">
+      <caption class="visually-hidden">
+        Cuentas del cliente
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Número cuenta</th>
+          <th scope="col">Tipo</th>
+          <th scope="col" class="cell-numeric">Saldo inicial</th>
+          <th scope="col" class="cell-numeric">Saldo al corte</th>
+          <th scope="col">Estado</th>
+          <th scope="col" class="cell-numeric">Créditos</th>
+          <th scope="col" class="cell-numeric">Débitos</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (cuenta of datos.cuentas; track cuenta.numeroCuenta) {
+          <tr>
+            <td class="cell-title">
+              <span class="cell-account">
+                <app-icon class="cell-account__icon" name="credit-card" />
+                {{ cuenta.numeroCuenta }}
+              </span>
+            </td>
+            <td data-label="Tipo">{{ tipoCuentaLabels[cuenta.tipoCuenta] }}</td>
+            <td class="cell-numeric cell-muted" data-label="Saldo inicial">
+              {{ cuenta.saldoInicial | money }}
+            </td>
+            <td class="cell-numeric cell-strong" data-label="Saldo al corte">
+              {{ cuenta.saldoDisponible | money }}
+            </td>
+            <td data-label="Estado">
+              <app-status-badge [active]="cuenta.estado" [labels]="estadoCuenta" />
+            </td>
+            <td
+              class="cell-numeric"
+              data-label="Créditos"
+              [class.amount--credit]="cuenta.totalCreditos > 0"
+            >
+              {{ cuenta.totalCreditos | money: 'signed' }}
+            </td>
+            <td
+              class="cell-numeric"
+              data-label="Débitos"
+              [class.amount--debit]="cuenta.totalDebitos < 0"
+            >
+              {{ cuenta.totalDebitos | money: 'signed' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </app-table-panel>
+</section>
+
+<section
+  class="reporte-section reporte-section--plain"
+  aria-labelledby="reporte-movimientos-titulo"
+>
+  <h3 id="reporte-movimientos-titulo" class="reporte-section__title">Movimientos del periodo</h3>
+  <app-table-panel
+    emptyMessage="No hay movimientos en el periodo"
+    [total]="datos.movimientos.length"
+    [matches]="movimientosVisibles().length"
+    (clearSearch)="query.set('')"
+  >
+    @if (datos.movimientos.length) {
+      <div class="table-toolbar">
+        <app-quick-search
+          label="Buscar movimientos del reporte"
+          [(term)]="query"
+          [total]="datos.movimientos.length"
+          [matches]="movimientosVisibles().length"
+        />
+      </div>
+    }
+    <table class="data-table data-table--cards">
+      <caption class="visually-hidden">
+        Movimientos del periodo
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Fecha</th>
+          <th scope="col">Cliente</th>
+          <th scope="col">Número cuenta</th>
+          <th scope="col">Tipo</th>
+          <th scope="col" class="cell-numeric">Saldo inicial</th>
+          <th scope="col">Estado</th>
+          <th scope="col" class="cell-numeric">Movimiento</th>
+          <th scope="col" class="cell-numeric">Saldo disponible</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (movimiento of movimientosVisibles(); track $index) {
+          <tr animate.enter="row-enter">
+            <td class="text-numeric" data-label="Fecha">
+              {{ movimiento.fecha | date: 'dd/MM/yyyy' }}
+              <span class="cell-muted">{{ movimiento.fecha | date: 'HH:mm' }}</span>
+            </td>
+            <td data-label="Cliente">{{ movimiento.cliente }}</td>
+            <td class="cell-strong text-numeric" data-label="Cuenta">
+              {{ movimiento.numeroCuenta }}
+            </td>
+            <td data-label="Tipo">{{ tipoCuentaLabels[movimiento.tipoCuenta] }}</td>
+            <td class="cell-numeric cell-muted" data-label="Saldo inicial">
+              {{ movimiento.saldoInicial | money }}
+            </td>
+            <td data-label="Estado">
+              <app-status-badge [active]="movimiento.estado" [labels]="estadoCuenta" />
+            </td>
+            <td
+              class="cell-numeric cell-strong cell-title"
+              [class.amount--credit]="movimiento.movimiento > 0"
+              [class.amount--debit]="movimiento.movimiento < 0"
+            >
+              {{ movimiento.movimiento | money: 'signed' }}
+            </td>
+            <td class="cell-numeric" data-label="Saldo disponible">
+              {{ movimiento.saldoDisponible | money }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </app-table-panel>
+</section>

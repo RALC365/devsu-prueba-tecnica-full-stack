@@ -1,0 +1,36 @@
+<header class="shell__header">
+  <a class="brand" routerLink="/">
+    <app-logo />
+  </a>
+</header>
+
+<div class="shell__body">
+  <nav class="shell__nav" aria-label="Menú principal">
+    <div class="nav" [style.--active-index]="activeIndex()">
+      <span
+        class="nav__indicator"
+        [class.nav__indicator--hidden]="activeIndex() < 0"
+        aria-hidden="true"
+      ></span>
+      <ul class="nav__list">
+        @for (item of navItems; track item.path) {
+          <li>
+            <a
+              class="nav__link"
+              [routerLink]="`/${item.path}`"
+              routerLinkActive="nav__link--active"
+              ariaCurrentWhenActive="page"
+            >
+              <app-icon class="nav__icon" [name]="item.icon" />
+              <span>{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  </nav>
+
+  <main class="shell__content">
+    <router-outlet />
+  </main>
+</div>

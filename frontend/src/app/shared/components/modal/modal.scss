@@ -1,0 +1,202 @@
+@use 'media';
+
+// el host es el fondo oscuro; su animación de salida es la que espera Angular
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10vh var(--space-4) var(--space-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background-color: var(--backdrop);
+  animation: backdrop-in 240ms ease both;
+}
+
+:host(.modal-host--drawer) {
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+  overflow: hidden;
+}
+
+:host(.modal-host--leaving) {
+  pointer-events: none;
+  animation: backdrop-out 240ms ease forwards;
+}
+
+.modal {
+  --modal-padding: var(--space-6);
+
+  width: 100%;
+  max-width: 40rem;
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.modal--sm {
+  max-width: 27rem;
+}
+
+.modal--drawer {
+  display: flex;
+  flex-direction: column;
+  max-width: 32rem;
+  height: 100%;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+
+  .modal__body {
+    flex: 1;
+    overflow-y: auto;
+  }
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-4) var(--space-5) var(--modal-padding);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.modal__title {
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
+}
+
+.modal__body {
+  padding: var(--space-5) var(--modal-padding) var(--modal-padding);
+}
+
+@include media.motion {
+  .modal {
+    animation: dialog-in 240ms var(--ease-out) both;
+  }
+
+  .modal--drawer {
+    animation: drawer-in 420ms var(--ease-drawer) both;
+  }
+
+  :host(.modal-host--leaving) {
+    .modal {
+      animation: dialog-out 160ms ease forwards;
+    }
+
+    .modal--drawer {
+      animation: drawer-out 230ms var(--ease-drawer) forwards;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal {
+    animation: panel-fade-in 160ms ease both;
+  }
+
+  :host(.modal-host--leaving) .modal {
+    animation: panel-fade-out 160ms ease forwards;
+  }
+}
+
+@include media.below(media.$phone) {
+  :host {
+    padding-top: var(--space-6);
+  }
+
+  // en teléfonos el panel lateral sube desde abajo
+  :host(.modal-host--drawer) {
+    align-items: flex-end;
+    padding-top: var(--space-6);
+  }
+
+  .modal {
+    --modal-padding: var(--space-4);
+  }
+
+  .modal--drawer {
+    max-width: none;
+    height: auto;
+    max-height: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  @include media.motion {
+    .modal--drawer {
+      animation-name: sheet-in;
+    }
+
+    :host(.modal-host--leaving) .modal--drawer {
+      animation-name: sheet-out;
+    }
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    background-color: transparent;
+  }
+}
+
+@keyframes backdrop-out {
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+@keyframes dialog-out {
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes drawer-out {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes panel-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes panel-fade-out {
+  to {
+    opacity: 0;
+  }
+}

@@ -1,0 +1,115 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <div class="form-grid">
+    <div class="form-field form-field--full">
+      <label class="form-label" for="cuenta-cliente">Cliente</label>
+      <select
+        id="cuenta-cliente"
+        class="form-control"
+        formControlName="clienteId"
+        aria-describedby="cuenta-cliente-hint cuenta-cliente-error"
+      >
+        <option [ngValue]="null" disabled>
+          {{ clientes().loading ? 'Cargando clientes' : 'Seleccione un cliente' }}
+        </option>
+        @for (option of clienteOptions(); track option.value) {
+          <option [ngValue]="option.value" [disabled]="option.disabled">{{ option.label }}</option>
+        }
+      </select>
+      @if (isEdit()) {
+        <p id="cuenta-cliente-hint" class="form-hint">
+          Solo se puede cambiar si la cuenta no tiene movimientos
+        </p>
+      }
+      @if (clientes().error; as error) {
+        <span class="form-error">No se pudieron cargar los clientes. {{ error }}</span>
+      }
+      <app-field-error id="cuenta-cliente-error" [control]="form.controls.clienteId" />
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="cuenta-numero">Número de cuenta</label>
+      <input
+        id="cuenta-numero"
+        class="form-control text-numeric"
+        formControlName="numeroCuenta"
+        inputmode="numeric"
+        autocomplete="off"
+        aria-describedby="cuenta-numero-error"
+      />
+      <app-field-error
+        id="cuenta-numero-error"
+        [control]="form.controls.numeroCuenta"
+        [messages]="messages.numeroCuenta"
+      />
+    </div>
+
+    <div class="form-field">
+      <span class="form-label" id="cuenta-tipo-label">Tipo de cuenta</span>
+      <div
+        id="cuenta-tipo"
+        class="segmented"
+        role="radiogroup"
+        aria-labelledby="cuenta-tipo-label"
+        aria-describedby="cuenta-tipo-error"
+        [class.is-invalid]="form.controls.tipoCuenta.invalid && form.controls.tipoCuenta.touched"
+      >
+        @for (tipo of tiposCuenta; track tipo) {
+          <label class="segmented__option">
+            <input type="radio" formControlName="tipoCuenta" [value]="tipo" />
+            {{ tipoCuentaLabels[tipo] }}
+          </label>
+        }
+      </div>
+      <app-field-error id="cuenta-tipo-error" [control]="form.controls.tipoCuenta" />
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="cuenta-saldo">Saldo inicial</label>
+      <div class="input-money">
+        <input
+          id="cuenta-saldo"
+          type="number"
+          class="form-control"
+          formControlName="saldoInicial"
+          min="0"
+          step="0.01"
+          aria-describedby="cuenta-saldo-error"
+        />
+      </div>
+      <app-field-error
+        id="cuenta-saldo-error"
+        [control]="form.controls.saldoInicial"
+        [messages]="messages.saldoInicial"
+      />
+    </div>
+
+    <div class="form-field">
+      <span class="form-label">Estado</span>
+      <label class="switch">
+        <input class="switch__input" type="checkbox" role="switch" formControlName="estado" />
+        <span class="switch__track" aria-hidden="true"></span>
+        Cuenta activa
+      </label>
+    </div>
+  </div>
+
+  @if (serverError(); as error) {
+    <app-error-alert
+      class="form-alert"
+      [message]="error.message"
+      [details]="unmatchedServerErrors()"
+    />
+  }
+
+  <div class="form-actions">
+    <button type="button" class="btn btn--secondary" (click)="cancelled.emit()">Cancelar</button>
+    <button type="submit" class="btn btn--primary" [disabled]="saving()">
+      @if (saving()) {
+        <app-spinner />
+      } @else {
+        <app-icon name="check" />
+      }
+      Guardar
+    </button>
+  </div>
+</form>

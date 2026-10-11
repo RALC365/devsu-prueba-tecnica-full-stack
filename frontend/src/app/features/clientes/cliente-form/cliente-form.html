@@ -1,0 +1,168 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <section class="form-section">
+    <h3 class="form-section__title">Datos personales</h3>
+    <div class="form-grid">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="cliente-nombre">Nombre</label>
+        <input
+          id="cliente-nombre"
+          class="form-control"
+          formControlName="nombre"
+          autocomplete="off"
+          aria-describedby="cliente-nombre-error"
+        />
+        <app-field-error id="cliente-nombre-error" [control]="form.controls.nombre" />
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="cliente-identificacion">Identificación</label>
+        <input
+          id="cliente-identificacion"
+          class="form-control"
+          formControlName="identificacion"
+          autocomplete="off"
+          aria-describedby="cliente-identificacion-error"
+        />
+        <app-field-error
+          id="cliente-identificacion-error"
+          [control]="form.controls.identificacion"
+          [messages]="messages.identificacion"
+        />
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="cliente-edad">Edad</label>
+        <input
+          id="cliente-edad"
+          type="number"
+          class="form-control"
+          formControlName="edad"
+          min="1"
+          max="120"
+          step="1"
+          aria-describedby="cliente-edad-error"
+        />
+        <app-field-error
+          id="cliente-edad-error"
+          [control]="form.controls.edad"
+          [messages]="messages.edad"
+        />
+      </div>
+
+      <div class="form-field form-field--full">
+        <span class="form-label" id="cliente-genero-label">Género</span>
+        <div
+          id="cliente-genero"
+          class="segmented"
+          role="radiogroup"
+          aria-labelledby="cliente-genero-label"
+          aria-describedby="cliente-genero-error"
+          [class.is-invalid]="form.controls.genero.invalid && form.controls.genero.touched"
+        >
+          @for (genero of generos; track genero) {
+            <label class="segmented__option">
+              <input type="radio" formControlName="genero" [value]="genero" />
+              {{ generoLabels[genero] }}
+            </label>
+          }
+        </div>
+        <app-field-error id="cliente-genero-error" [control]="form.controls.genero" />
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section">
+    <h3 class="form-section__title">Contacto</h3>
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label" for="cliente-telefono">Teléfono</label>
+        <input
+          id="cliente-telefono"
+          type="tel"
+          class="form-control"
+          formControlName="telefono"
+          autocomplete="off"
+          aria-describedby="cliente-telefono-error"
+        />
+        <app-field-error
+          id="cliente-telefono-error"
+          [control]="form.controls.telefono"
+          [messages]="messages.telefono"
+        />
+      </div>
+
+      <div class="form-field form-field--full">
+        <label class="form-label" for="cliente-direccion">Dirección</label>
+        <input
+          id="cliente-direccion"
+          class="form-control"
+          formControlName="direccion"
+          autocomplete="off"
+          aria-describedby="cliente-direccion-error"
+        />
+        <app-field-error id="cliente-direccion-error" [control]="form.controls.direccion" />
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section">
+    <h3 class="form-section__title">Acceso</h3>
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label" for="cliente-contrasena">Contraseña</label>
+        <div class="input-affix">
+          <input
+            id="cliente-contrasena"
+            class="form-control"
+            formControlName="contrasena"
+            autocomplete="new-password"
+            aria-describedby="cliente-contrasena-hint cliente-contrasena-error"
+            [type]="showPassword() ? 'text' : 'password'"
+          />
+          <button
+            type="button"
+            class="btn btn--icon input-affix__button"
+            [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [attr.aria-pressed]="showPassword()"
+            (click)="showPassword.set(!showPassword())"
+          >
+            <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" />
+          </button>
+        </div>
+        @if (isEdit()) {
+          <p id="cliente-contrasena-hint" class="form-hint">Dejar en blanco para no cambiarla</p>
+        }
+        <app-field-error id="cliente-contrasena-error" [control]="form.controls.contrasena" />
+      </div>
+
+      <div class="form-field">
+        <span class="form-label">Estado</span>
+        <label class="switch">
+          <input class="switch__input" type="checkbox" role="switch" formControlName="estado" />
+          <span class="switch__track" aria-hidden="true"></span>
+          Cliente activo
+        </label>
+      </div>
+    </div>
+  </section>
+
+  @if (serverError(); as error) {
+    <app-error-alert
+      class="form-alert"
+      [message]="error.message"
+      [details]="unmatchedServerErrors()"
+    />
+  }
+
+  <div class="form-actions">
+    <button type="button" class="btn btn--secondary" (click)="cancelled.emit()">Cancelar</button>
+    <button type="submit" class="btn btn--primary" [disabled]="saving()">
+      @if (saving()) {
+        <app-spinner />
+      } @else {
+        <app-icon name="check" />
+      }
+      Guardar
+    </button>
+  </div>
+</form>

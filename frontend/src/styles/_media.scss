@@ -1,0 +1,27 @@
+$tablet: 768px;
+$phone: 600px;
+
+@mixin below($breakpoint) {
+  @media (max-width: ($breakpoint - 0.02px)) {
+    @content;
+  }
+}
+
+@mixin hover {
+  @media (hover: hover) and (pointer: fine) {
+    @content;
+  }
+}
+
+// el movimiento se agrega solo si el sistema no pide reducirlo
+@mixin motion {
+  @media (prefers-reduced-motion: no-preference) {
+    @content;
+  }
+}
+
+@mixin hover-motion {
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    @content;
+  }
+}

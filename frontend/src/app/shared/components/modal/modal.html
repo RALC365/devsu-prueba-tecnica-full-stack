@@ -1,0 +1,20 @@
+<div
+  #panel
+  class="modal"
+  [class.modal--sm]="size() === 'sm'"
+  [class.modal--drawer]="variant() === 'drawer'"
+  role="dialog"
+  aria-modal="true"
+  tabindex="-1"
+  [attr.aria-labelledby]="titleId"
+>
+  <header class="modal__header">
+    <h2 class="modal__title" [id]="titleId">{{ heading() }}</h2>
+    <button type="button" class="btn btn--icon" aria-label="Cerrar" (click)="closed.emit()">
+      <app-icon name="x" />
+    </button>
+  </header>
+  <div #body class="modal__body">
+    <ng-content />
+  </div>
+</div>

@@ -1,0 +1,36 @@
+@if (rows().length) {
+  <div class="chart-axis" aria-hidden="true">
+    <span class="chart-axis__side chart-axis__side--debit">Débitos</span>
+    <span class="chart-axis__side chart-axis__side--credit">Créditos</span>
+  </div>
+
+  <ul class="chart">
+    @for (row of rows(); track row.numeroCuenta) {
+      <li class="chart__row" [style.--row-index]="$index">
+        <p class="chart__label">
+          <span class="chart__account">{{ row.numeroCuenta }}</span>
+          <span class="chart__type">{{ row.tipo }}</span>
+        </p>
+        <div class="chart__plot">
+          <div class="chart__side chart__side--debit">
+            <span class="chart__value" [class.chart__value--zero]="!row.debitos">
+              <span class="visually-hidden">Débitos:</span>
+              {{ row.debitos | money }}
+            </span>
+            <span class="chart__bar chart__bar--debit" [style.--bar-pct]="row.debitosPct"></span>
+          </div>
+          <div class="chart__side chart__side--credit">
+            <span class="chart__bar chart__bar--credit" [style.--bar-pct]="row.creditosPct"></span>
+            <span class="chart__value" [class.chart__value--zero]="!row.creditos">
+              <span class="visually-hidden">Créditos:</span>
+              {{ row.creditos | money }}
+            </span>
+          </div>
+          <span class="chart__tip" aria-hidden="true">Neto {{ row.neto | money: 'signed' }}</span>
+        </div>
+      </li>
+    }
+  </ul>
+} @else {
+  <p class="chart-empty">El cliente no tiene cuentas</p>
+}

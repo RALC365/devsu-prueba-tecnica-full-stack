@@ -1,0 +1,30 @@
+<div class="toast-stack" aria-live="polite">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <div
+      class="toast"
+      [class.toast--error]="toast.type === 'error'"
+      [style.--toast-duration]="`${durations[toast.type]}ms`"
+      animate.enter="toast--entering"
+      animate.leave="toast--leaving"
+    >
+      <div class="toast__card">
+        <div class="toast__body">
+          <app-icon
+            class="toast__icon"
+            [name]="toast.type === 'error' ? 'alert-circle' : 'check-circle'"
+          />
+          <p class="toast__message">{{ toast.message }}</p>
+          <button
+            type="button"
+            class="toast__close"
+            aria-label="Cerrar notificación"
+            (click)="toastService.dismiss(toast.id)"
+          >
+            <app-icon name="x" />
+          </button>
+        </div>
+        <span class="toast__timer" aria-hidden="true"></span>
+      </div>
+    </div>
+  }
+</div>

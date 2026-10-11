@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:banco;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    hikari:
+      connection-init-sql: SET LOCK_TIMEOUT 5000
+  jpa:
+    hibernate:
+      ddl-auto: create-drop

@@ -1,0 +1,92 @@
+<form class="card filter" [formGroup]="form" (ngSubmit)="onGenerate()">
+  <div class="filter__fields">
+    <div class="form-field filter__cliente">
+      <label class="form-label" for="reporte-cliente">Cliente</label>
+      <select
+        id="reporte-cliente"
+        class="form-control"
+        formControlName="clienteId"
+        aria-describedby="reporte-cliente-error"
+      >
+        <option [ngValue]="null" disabled>
+          {{ clientes().loading ? 'Cargando clientes' : 'Seleccione un cliente' }}
+        </option>
+        @for (option of clienteOptions(); track option.value) {
+          <option [ngValue]="option.value">{{ option.label }}</option>
+        }
+      </select>
+      @if (clientes().error; as error) {
+        <span class="form-error">No se pudieron cargar los clientes. {{ error }}</span>
+      }
+      <app-field-error id="reporte-cliente-error" [control]="form.controls.clienteId" />
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="reporte-inicio">Desde</label>
+      <input
+        id="reporte-inicio"
+        type="date"
+        class="form-control"
+        formControlName="fechaInicio"
+        [class.is-invalid]="form.touched && form.hasError('dateRange')"
+        aria-describedby="reporte-inicio-error reporte-rango-error"
+      />
+      <app-field-error id="reporte-inicio-error" [control]="form.controls.fechaInicio" />
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="reporte-fin">Hasta</label>
+      <input
+        id="reporte-fin"
+        type="date"
+        class="form-control"
+        formControlName="fechaFin"
+        [class.is-invalid]="form.touched && form.hasError('dateRange')"
+        aria-describedby="reporte-fin-error reporte-rango-error"
+      />
+      <app-field-error id="reporte-fin-error" [control]="form.controls.fechaFin" />
+    </div>
+
+    <app-field-error id="reporte-rango-error" class="filter__range-error" [control]="form" />
+  </div>
+
+  <div class="filter__footer">
+    <div class="filter__periodos" role="group" aria-label="Periodos frecuentes">
+      @for (periodo of periodos; track periodo.id) {
+        <button
+          type="button"
+          class="chip"
+          [class.chip--active]="periodoActivo() === periodo.id"
+          [attr.aria-pressed]="periodoActivo() === periodo.id"
+          (click)="aplicarPeriodo(periodo)"
+        >
+          {{ periodo.label }}
+        </button>
+      }
+    </div>
+
+    <div class="filter__actions">
+      <button
+        type="button"
+        class="btn btn--secondary"
+        [disabled]="downloading()"
+        (click)="onDownloadPdf()"
+      >
+        @if (downloading()) {
+          <app-spinner />
+        } @else {
+          <app-icon name="download" />
+        }
+        Descargar PDF
+      </button>
+      <button type="submit" class="btn btn--primary" [disabled]="generating()">
+        Generar reporte
+        @if (generating()) {
+          <app-spinner />
+        } @else {
+          <app-icon name="arrow-right" />
+        }
+      </button>
+    </div>
+  </div>
+</form>

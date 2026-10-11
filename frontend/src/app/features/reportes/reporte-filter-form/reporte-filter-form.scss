@@ -1,0 +1,60 @@
+@use 'media';
+
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6);
+
+  @include media.below(media.$phone) {
+    padding: var(--space-4);
+  }
+}
+
+.filter__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-4);
+
+  @include media.below(media.$tablet) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    .filter__cliente {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.filter__range-error {
+  grid-column: 1 / -1;
+}
+
+.filter__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line-soft);
+}
+
+.filter__periodos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.filter__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+
+  @include media.below(media.$phone) {
+    flex: 1 1 100%;
+
+    .btn {
+      flex: 1;
+    }
+  }
+}

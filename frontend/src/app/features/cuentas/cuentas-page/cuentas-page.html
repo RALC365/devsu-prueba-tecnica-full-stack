@@ -1,0 +1,129 @@
+@let total = store.items().length;
+
+<app-page-header heading="Cuentas">
+  @if (total) {
+    <p class="page-header__meta">
+      <strong>{{ total }}</strong> {{ total === 1 ? 'cuenta' : 'cuentas' }} ·
+      <strong>{{ saldoTotal() | money }}</strong> en saldo disponible
+    </p>
+  }
+  <button type="button" class="btn btn--primary" (click)="store.openCreate()">
+    <app-icon name="plus" />
+    Nueva cuenta
+  </button>
+</app-page-header>
+
+<app-table-panel
+  emptyMessage="No hay cuentas registradas"
+  createLabel="Nueva cuenta"
+  [total]="total"
+  [matches]="store.visibleItems().length"
+  [loading]="store.loading()"
+  [error]="store.loadError()"
+  (retry)="store.reload()"
+  (clearSearch)="store.query.set('')"
+  (create)="store.openCreate()"
+>
+  <div class="table-toolbar">
+    <app-quick-search
+      label="Buscar cuentas"
+      [(term)]="store.query"
+      [total]="total"
+      [matches]="store.visibleItems().length"
+    />
+  </div>
+
+  <table class="data-table data-table--cards">
+    <caption class="visually-hidden">
+      Listado de cuentas
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Número cuenta</th>
+        <th scope="col">Tipo</th>
+        <th scope="col">Cliente</th>
+        <th scope="col" class="cell-numeric">Saldo inicial</th>
+        <th scope="col" class="cell-numeric">Saldo disponible</th>
+        <th scope="col">Estado</th>
+        <th scope="col" class="cell-actions">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (cuenta of store.visibleItems(); track cuenta.cuentaId) {
+        <tr
+          animate.enter="row-enter"
+          [appFlash]="store.highlighted()"
+          [appFlashId]="cuenta.cuentaId"
+        >
+          <td class="cell-title">
+            <span class="cell-account">
+              <app-icon class="cell-account__icon" name="credit-card" />
+              {{ cuenta.numeroCuenta }}
+            </span>
+          </td>
+          <td data-label="Tipo">{{ tipoCuentaLabels[cuenta.tipoCuenta] }}</td>
+          <td data-label="Cliente">{{ cuenta.cliente }}</td>
+          <td class="cell-numeric cell-muted" data-label="Saldo inicial">
+            {{ cuenta.saldoInicial | money }}
+          </td>
+          <td class="cell-numeric cell-strong" data-label="Saldo disponible">
+            {{ cuenta.saldoDisponible | money }}
+          </td>
+          <td data-label="Estado">
+            <app-status-badge [active]="cuenta.estado" [labels]="estadoCuenta" />
+          </td>
+          <td class="cell-actions">
+            <div class="row-actions">
+              <button
+                type="button"
+                class="btn btn--icon"
+                title="Editar"
+                [attr.aria-label]="`Editar cuenta ${cuenta.numeroCuenta}`"
+                (click)="store.openEdit(cuenta)"
+              >
+                <app-icon name="edit" />
+              </button>
+              <button
+                type="button"
+                class="btn btn--icon btn--icon-danger"
+                title="Eliminar"
+                [attr.aria-label]="`Eliminar cuenta ${cuenta.numeroCuenta}`"
+                (click)="store.requestDelete(cuenta)"
+              >
+                <app-icon name="trash" />
+              </button>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</app-table-panel>
+
+@if (store.editorOpen()) {
+  <app-modal
+    variant="drawer"
+    [heading]="store.editing() ? 'Editar cuenta' : 'Nueva cuenta'"
+    (closed)="store.closeEditor()"
+  >
+    <app-cuenta-form
+      [cuenta]="store.editing()"
+      [clientes]="store.clientes()"
+      [saving]="store.saving()"
+      [serverError]="store.saveError()"
+      (submitted)="store.save($event)"
+      (cancelled)="store.closeEditor()"
+    />
+  </app-modal>
+}
+
+@if (store.pendingDelete(); as cuenta) {
+  <app-confirm-dialog
+    heading="Eliminar cuenta"
+    [busy]="store.deleting()"
+    (confirmed)="store.confirmDelete()"
+    (cancelled)="store.cancelDelete()"
+  >
+    <p>¿Desea eliminar la cuenta <strong>{{ cuenta.numeroCuenta }}</strong>?</p>
+  </app-confirm-dialog>
+}

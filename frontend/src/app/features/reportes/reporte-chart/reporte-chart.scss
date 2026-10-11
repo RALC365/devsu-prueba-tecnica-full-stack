@@ -1,0 +1,197 @@
+@use 'media';
+
+:host {
+  --label-width: 8.5rem;
+  --bar-credit: #2e9a68;
+  --bar-debit: #d9584c;
+
+  display: block;
+}
+
+.chart-axis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-2) calc(var(--label-width) + var(--space-4));
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+.chart-axis__side--debit {
+  text-align: right;
+
+  &::before {
+    content: '← ';
+  }
+}
+
+.chart-axis__side--credit::after {
+  content: ' →';
+}
+
+// sin espacio entre filas para que el hover no se corte al pasar de una a otra
+.chart {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chart__row {
+  display: grid;
+  grid-template-columns: var(--label-width) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  transition: opacity var(--duration-base) ease;
+}
+
+@include media.hover {
+  .chart:has(.chart__row:hover) .chart__row:not(:hover) {
+    opacity: 0.4;
+  }
+
+  .chart__row:hover .chart__tip {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.chart__label {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.chart__account {
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-950);
+}
+
+.chart__type {
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+}
+
+.chart__plot {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: calc(-1 * var(--space-3));
+    bottom: calc(-1 * var(--space-3));
+    left: 50%;
+    width: 1px;
+    background-color: var(--line-strong);
+  }
+}
+
+.chart__side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.chart__side--debit {
+  justify-content: flex-end;
+}
+
+.chart__bar {
+  flex-shrink: 0;
+  width: calc((100% - 5.5rem) * var(--bar-pct, 0) / 100);
+  height: 0.75rem;
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.chart__bar--debit {
+  background-color: var(--bar-debit);
+  border-radius: 4px 0 0 4px;
+  transform-origin: right center;
+}
+
+.chart__bar--credit {
+  background-color: var(--bar-credit);
+  border-radius: 0 4px 4px 0;
+  transform-origin: left center;
+}
+
+.chart__value {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-800);
+  white-space: nowrap;
+}
+
+.chart__value--zero {
+  color: var(--ink-300);
+}
+
+// queda montado y solo cambia de opacidad, así no salta al aparecer
+.chart__tip {
+  position: absolute;
+  bottom: calc(100% + var(--space-1));
+  left: 50%;
+  z-index: 1;
+  padding: 0.25rem 0.5rem;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  white-space: nowrap;
+  background-color: var(--ink-950);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-raised);
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity var(--duration-fast) ease,
+    transform var(--duration-fast) var(--ease-out);
+  pointer-events: none;
+}
+
+.chart-empty {
+  color: var(--ink-500);
+}
+
+@include media.motion {
+  .chart__bar {
+    animation: bar-grow 700ms var(--ease-out) both;
+    animation-delay: calc(var(--row-index, 0) * 80ms + 120ms);
+  }
+}
+
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@include media.below(media.$phone) {
+  .chart-axis {
+    margin-left: 0;
+  }
+
+  .chart__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .chart__label {
+    flex-direction: row;
+    gap: var(--space-2);
+    align-items: baseline;
+  }
+
+  .chart__plot::before {
+    top: calc(-1 * var(--space-1));
+  }
+}

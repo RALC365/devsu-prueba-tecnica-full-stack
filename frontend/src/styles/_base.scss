@@ -1,0 +1,108 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-height) + var(--space-4));
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  color: var(--ink-800);
+  background-color: var(--canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+
+  // capa fija aparte: un fondo con attachment fixed repinta en cada scroll
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(56rem 22rem at 18% -6rem, #e6eefa 0%, transparent 70%),
+      radial-gradient(44rem 18rem at 100% 0, #fbf3e4 0%, transparent 65%);
+  }
+
+  // el ancho de la barra de scroll lo calcula el modal, para que nada se corra
+  &.has-modal {
+    overflow: hidden;
+    padding-right: var(--scrollbar-width, 0px);
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--ink-950);
+  font-weight: var(--weight-semibold);
+  line-height: 1.2;
+}
+
+a {
+  color: var(--brand-600);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background-color: var(--brand-100);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-600);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.text-numeric {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.text-muted {
+  color: var(--ink-500);
+}
+
+.amount--credit {
+  color: var(--credit);
+}
+
+.amount--debit {
+  color: var(--debit);
+}

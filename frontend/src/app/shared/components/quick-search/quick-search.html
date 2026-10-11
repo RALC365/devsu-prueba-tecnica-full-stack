@@ -1,0 +1,29 @@
+<div class="quick-search__field">
+  <label class="visually-hidden" [for]="inputId">{{ label() }}</label>
+  <app-icon class="quick-search__icon" name="search" />
+  <input
+    #searchInput
+    type="search"
+    class="quick-search__input"
+    autocomplete="off"
+    aria-keyshortcuts="/"
+    [id]="inputId"
+    placeholder="Buscar"
+    [value]="term()"
+    (input)="term.set(searchInput.value)"
+    (keydown.escape)="onEscape(searchInput)"
+  />
+  @if (term()) {
+    <button
+      type="button"
+      class="quick-search__clear"
+      aria-label="Limpiar búsqueda"
+      (click)="clear(searchInput)"
+    >
+      <app-icon name="x" />
+    </button>
+  } @else {
+    <kbd class="quick-search__key" aria-hidden="true">/</kbd>
+  }
+</div>
+<p class="quick-search__count" aria-live="polite">{{ matches() }} de {{ total() }} registros</p>

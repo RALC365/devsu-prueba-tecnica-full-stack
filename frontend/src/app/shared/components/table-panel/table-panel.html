@@ -1,0 +1,47 @@
+<ng-content select=".table-toolbar" />
+
+@if (loading() && total() === 0) {
+  <div class="skeleton-table" role="status">
+    <span class="visually-hidden">Cargando</span>
+    @for (row of skeletonRows; track row) {
+      <div class="skeleton-table__row" aria-hidden="true">
+        <span class="skeleton skeleton--circle"></span>
+        <span class="skeleton"></span>
+        <span class="skeleton"></span>
+        <span class="skeleton skeleton--wide"></span>
+        <span class="skeleton skeleton--wide"></span>
+      </div>
+    }
+  </div>
+} @else if (error(); as error) {
+  <app-empty-state
+    icon="alert-circle"
+    tone="danger"
+    heading="No se pudo cargar la información"
+    [description]="error"
+  >
+    <button type="button" class="btn btn--secondary" (click)="retry.emit()">
+      <app-icon name="refresh" />
+      Reintentar
+    </button>
+  </app-empty-state>
+} @else if (total() === 0) {
+  <app-empty-state [heading]="emptyMessage()">
+    @if (createLabel(); as label) {
+      <button type="button" class="btn btn--primary" (click)="create.emit()">
+        <app-icon name="plus" />
+        {{ label }}
+      </button>
+    }
+  </app-empty-state>
+} @else if (matches() === 0) {
+  <app-empty-state icon="search" heading="No se encontraron resultados">
+    <button type="button" class="btn btn--secondary" (click)="clearSearch.emit()">
+      Limpiar búsqueda
+    </button>
+  </app-empty-state>
+} @else {
+  <div class="table-scroll">
+    <ng-content />
+  </div>
+}

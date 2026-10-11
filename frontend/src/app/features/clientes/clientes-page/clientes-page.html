@@ -1,0 +1,124 @@
+@let total = store.items().length;
+
+<app-page-header heading="Clientes">
+  @if (total) {
+    <p class="page-header__meta">
+      <strong>{{ total }}</strong> {{ total === 1 ? 'cliente' : 'clientes' }} ·
+      <strong>{{ activos() }}</strong> {{ activos() === 1 ? 'activo' : 'activos' }}
+    </p>
+  }
+  <button type="button" class="btn btn--primary" (click)="store.openCreate()">
+    <app-icon name="plus" />
+    Nuevo cliente
+  </button>
+</app-page-header>
+
+<app-table-panel
+  emptyMessage="No hay clientes registrados"
+  createLabel="Nuevo cliente"
+  [total]="total"
+  [matches]="store.visibleItems().length"
+  [loading]="store.loading()"
+  [error]="store.loadError()"
+  (retry)="store.reload()"
+  (clearSearch)="store.query.set('')"
+  (create)="store.openCreate()"
+>
+  <div class="table-toolbar">
+    <app-quick-search
+      label="Buscar clientes"
+      [(term)]="store.query"
+      [total]="total"
+      [matches]="store.visibleItems().length"
+    />
+  </div>
+
+  <table class="data-table data-table--cards">
+    <caption class="visually-hidden">
+      Listado de clientes
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Nombre</th>
+        <th scope="col">Identificación</th>
+        <th scope="col">Género</th>
+        <th scope="col" class="cell-numeric">Edad</th>
+        <th scope="col">Dirección</th>
+        <th scope="col">Teléfono</th>
+        <th scope="col">Estado</th>
+        <th scope="col" class="cell-actions">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (cliente of store.visibleItems(); track cliente.clienteId) {
+        <tr
+          animate.enter="row-enter"
+          [appFlash]="store.highlighted()"
+          [appFlashId]="cliente.clienteId"
+        >
+          <td class="cell-title">
+            <span class="cell-person">
+              <app-avatar [name]="cliente.nombre" />
+              {{ cliente.nombre }}
+            </span>
+          </td>
+          <td class="text-numeric" data-label="Identificación">{{ cliente.identificacion }}</td>
+          <td data-label="Género">{{ generoLabels[cliente.genero] }}</td>
+          <td class="cell-numeric" data-label="Edad">{{ cliente.edad }}</td>
+          <td class="cell-wrap" data-label="Dirección">{{ cliente.direccion }}</td>
+          <td class="text-numeric" data-label="Teléfono">{{ cliente.telefono }}</td>
+          <td data-label="Estado"><app-status-badge [active]="cliente.estado" /></td>
+          <td class="cell-actions">
+            <div class="row-actions">
+              <button
+                type="button"
+                class="btn btn--icon"
+                title="Editar"
+                [attr.aria-label]="`Editar cliente ${cliente.nombre}`"
+                (click)="store.openEdit(cliente)"
+              >
+                <app-icon name="edit" />
+              </button>
+              <button
+                type="button"
+                class="btn btn--icon btn--icon-danger"
+                title="Eliminar"
+                [attr.aria-label]="`Eliminar cliente ${cliente.nombre}`"
+                (click)="store.requestDelete(cliente)"
+              >
+                <app-icon name="trash" />
+              </button>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</app-table-panel>
+
+@if (store.editorOpen()) {
+  <app-modal
+    variant="drawer"
+    [heading]="store.editing() ? 'Editar cliente' : 'Nuevo cliente'"
+    (closed)="store.closeEditor()"
+  >
+    <app-cliente-form
+      [cliente]="store.editing()"
+      [saving]="store.saving()"
+      [serverError]="store.saveError()"
+      (submitted)="store.save($event)"
+      (cancelled)="store.closeEditor()"
+    />
+  </app-modal>
+}
+
+@if (store.pendingDelete(); as cliente) {
+  <app-confirm-dialog
+    heading="Eliminar cliente"
+    [busy]="store.deleting()"
+    (confirmed)="store.confirmDelete()"
+    (cancelled)="store.cancelDelete()"
+  >
+    <p>¿Desea eliminar a <strong>{{ cliente.nombre }}</strong>?</p>
+  </app-confirm-dialog>
+}

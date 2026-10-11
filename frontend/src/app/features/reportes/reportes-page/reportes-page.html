@@ -1,0 +1,25 @@
+<app-page-header heading="Reportes" />
+
+<app-reporte-filter-form
+  [clientes]="clientes()"
+  [generating]="reporte.isLoading()"
+  [downloading]="downloading()"
+  (generate)="generate($event)"
+  (downloadPdf)="downloadPdf($event)"
+/>
+
+<div class="reporte-result" [attr.aria-busy]="reporte.isLoading()">
+  @if (reporte.error(); as error) {
+    <app-error-alert [message]="error.message" />
+  } @else if (reporteVisible(); as visible) {
+    <app-reporte-view [class.is-stale]="reporte.isLoading()" [reporte]="visible" />
+  } @else if (reporte.isLoading()) {
+    <app-loading-indicator class="card" label="Generando reporte" />
+  } @else {
+    <app-empty-state
+      class="card"
+      icon="chart"
+      heading="Seleccione un cliente y un rango de fechas."
+    />
+  }
+</div>

@@ -1,0 +1,182 @@
+@use 'media';
+
+.toast-stack {
+  position: fixed;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  width: min(24rem, calc(100vw - 2 * var(--space-5)));
+  pointer-events: none;
+
+  @include media.below(media.$tablet) {
+    right: var(--space-4);
+    bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + var(--space-3));
+    width: calc(100vw - 2 * var(--space-4));
+  }
+}
+
+// La fila de la grilla se colapsa al salir para que las otras
+// notificaciones se acomoden suave en vez de saltar.
+.toast {
+  display: grid;
+  grid-template-rows: 1fr;
+  margin-top: var(--space-3);
+  pointer-events: auto;
+}
+
+.toast__card {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background-color: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 0 0 1px rgb(11 27 46 / 6%),
+    var(--shadow-raised);
+}
+
+.toast__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+}
+
+.toast__icon {
+  margin-top: 0.0625rem;
+  font-size: 1.25rem;
+  color: var(--credit);
+}
+
+.toast--error .toast__icon {
+  color: var(--debit);
+}
+
+.toast__message {
+  flex: 1;
+  padding-top: 0.0625rem;
+  font-weight: var(--weight-medium);
+  color: var(--ink-950);
+}
+
+.toast__close {
+  display: inline-flex;
+  padding: var(--space-1);
+  color: var(--ink-400);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
+
+  &:hover {
+    color: var(--ink-800);
+    background-color: var(--surface-sunken);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.toast__timer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: currentcolor;
+  opacity: 0.18;
+  transform-origin: left center;
+  color: var(--credit);
+
+  .toast--error & {
+    color: var(--debit);
+  }
+}
+
+@include media.motion {
+  .toast--entering {
+    animation: toast-in 320ms var(--ease-out);
+  }
+
+  .toast--leaving {
+    animation: toast-out 220ms var(--ease-out) forwards;
+  }
+
+  .toast__timer {
+    animation: toast-timer var(--toast-duration) linear forwards;
+  }
+
+  // el ícono se crea una sola vez con la notificación, así que no se repite
+  .toast--error .toast__icon {
+    animation: toast-shake 420ms 160ms ease-in-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast--entering {
+    animation: toast-fade-in 160ms ease;
+  }
+
+  .toast--leaving {
+    animation: toast-fade-out 160ms ease forwards;
+  }
+
+  .toast__timer {
+    display: none;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    grid-template-rows: 0fr;
+    margin-top: 0;
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    grid-template-rows: 0fr;
+    margin-top: 0;
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes toast-timer {
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes toast-shake {
+  20%,
+  60% {
+    transform: translateX(-2px);
+  }
+
+  40%,
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes toast-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes toast-fade-out {
+  to {
+    opacity: 0;
+  }
+}

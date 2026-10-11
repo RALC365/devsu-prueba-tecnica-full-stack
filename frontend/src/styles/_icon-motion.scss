@@ -1,0 +1,131 @@
+@use 'media';
+
+// Cada ícono reacciona a su manera cuando se pasa el mouse por el botón o el
+// link que lo contiene. Son transiciones (no keyframes) para que al salir a
+// medio camino regresen suave en vez de saltar.
+@include media.hover-motion {
+  app-icon {
+    svg,
+    path {
+      transition: transform 280ms var(--ease-out);
+      transform-box: fill-box;
+    }
+  }
+
+  $triggers: '.btn:hover:not(:disabled)', '.nav__link:hover', '.chip:hover';
+
+  @each $trigger in $triggers {
+    #{$trigger} {
+      app-icon[data-icon='plus'] svg,
+      app-icon[data-icon='x'] svg {
+        transform: rotate(90deg);
+      }
+
+      app-icon[data-icon='arrow-right'] svg {
+        transform: translateX(3px);
+      }
+
+      app-icon[data-icon='download'] path:nth-of-type(n + 2) {
+        transform: translateY(2px);
+      }
+
+      app-icon[data-icon='refresh'] svg {
+        transform: rotate(180deg);
+        transition-duration: 520ms;
+      }
+
+      app-icon[data-icon='check'] svg {
+        transform: scale(1.15);
+      }
+
+      // el lápiz baja a escribir y la línea se acorta
+      app-icon[data-icon='edit'] {
+        path:nth-of-type(1) {
+          transform: scaleX(0.6);
+          transform-origin: right center;
+        }
+
+        path:nth-of-type(2) {
+          transform: translate(-1px, 1px);
+        }
+      }
+
+      // la tapa del basurero se levanta
+      app-icon[data-icon='trash'] path:nth-of-type(-n + 2) {
+        transform: translateY(-1.5px);
+      }
+
+      // la segunda persona se hace a un lado y la primera levanta la cabeza
+      app-icon[data-icon='users'] {
+        path:nth-of-type(n + 3) {
+          transform: translateX(1.5px);
+        }
+
+        path:nth-of-type(2) {
+          transform: translateY(-1px);
+          transition-delay: 40ms;
+        }
+      }
+
+      // la banda y los dígitos de la tarjeta se desplazan, como al pasarla
+      app-icon[data-icon='credit-card'] {
+        path:nth-of-type(2) {
+          transform: translateY(1.5px);
+        }
+
+        path:nth-of-type(3) {
+          transform: scaleX(1.6);
+          transform-origin: left center;
+          transition-delay: 40ms;
+        }
+      }
+
+      // cada flecha avanza hacia donde apunta
+      app-icon[data-icon='transfer'] {
+        path:nth-of-type(-n + 2) {
+          transform: translateX(-2px);
+        }
+
+        path:nth-of-type(n + 3) {
+          transform: translateX(2px);
+        }
+      }
+
+      // las barras se vuelven a leer
+      app-icon[data-icon='chart'] {
+        path:nth-of-type(n + 2) {
+          transform-origin: center bottom;
+        }
+
+        path:nth-of-type(2) {
+          transform: scaleY(1.4);
+        }
+
+        path:nth-of-type(3) {
+          transform: scaleY(0.75);
+          transition-delay: 50ms;
+        }
+
+        path:nth-of-type(4) {
+          transform: scaleY(1.25);
+          transition-delay: 100ms;
+        }
+      }
+    }
+  }
+}
+
+// el check de la notificación se dibuja al aparecer
+@include media.motion {
+  .toast__icon[data-icon='check-circle'] path:nth-of-type(2) {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: check-draw 420ms 200ms var(--ease-out) forwards;
+  }
+}
+
+@keyframes check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}

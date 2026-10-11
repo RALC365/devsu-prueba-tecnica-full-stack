@@ -1,0 +1,53 @@
+name: banco
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: banco
+      POSTGRES_USER: ${DB_USERNAME:-banco}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-banco}
+      TZ: America/Guayaquil
+    volumes:
+      - ./BaseDatos.sql:/docker-entrypoint-initdb.d/01-BaseDatos.sql:ro
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    image: banco-backend:1.0.0
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/banco
+      DB_USERNAME: ${DB_USERNAME:-banco}
+      DB_PASSWORD: ${DB_PASSWORD:-banco}
+      BANCO_LIMITE_DIARIO_RETIRO: ${LIMITE_DIARIO_RETIRO:-1000}
+      BANCO_CORS_ORIGENES: http://localhost:4200
+      TZ: America/Guayaquil
+    ports:
+      - "${API_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    image: banco-frontend:1.0.0
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_URL: http://backend:8080
+    ports:
+      - "${FRONTEND_PORT:-4200}:8080"
+    restart: unless-stopped
+
+volumes:
+  db-data:

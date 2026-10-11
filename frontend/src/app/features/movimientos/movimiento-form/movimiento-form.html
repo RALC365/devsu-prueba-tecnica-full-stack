@@ -1,0 +1,126 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <div class="form-grid">
+    <div class="form-field form-field--full">
+      <label class="form-label" for="movimiento-cuenta">Cuenta</label>
+      <select
+        id="movimiento-cuenta"
+        class="form-control"
+        formControlName="numeroCuenta"
+        aria-describedby="movimiento-cuenta-hint movimiento-cuenta-error"
+      >
+        <option value="" disabled>
+          {{ cuentas().loading ? 'Cargando cuentas' : 'Seleccione una cuenta' }}
+        </option>
+        @for (option of cuentaOptions(); track option.value) {
+          <option [value]="option.value" [disabled]="option.disabled">{{ option.label }}</option>
+        }
+      </select>
+      @if (cuentas().error; as error) {
+        <span class="form-error">No se pudieron cargar las cuentas. {{ error }}</span>
+      }
+      <app-field-error id="movimiento-cuenta-error" [control]="form.controls.numeroCuenta" />
+    </div>
+
+    <div class="form-field form-field--full">
+      <span class="form-label" id="movimiento-tipo-label">Tipo de movimiento</span>
+      <div
+        id="movimiento-tipo"
+        class="segmented"
+        role="radiogroup"
+        aria-labelledby="movimiento-tipo-label"
+        aria-describedby="movimiento-tipo-error"
+        [class.is-invalid]="
+          form.controls.tipoMovimiento.invalid && form.controls.tipoMovimiento.touched
+        "
+      >
+        @for (tipo of tiposMovimiento; track tipo) {
+          <label
+            class="segmented__option"
+            [class.operacion--credito]="tipo === 'CREDITO'"
+            [class.operacion--debito]="tipo === 'DEBITO'"
+          >
+            <input type="radio" formControlName="tipoMovimiento" [value]="tipo" />
+            <span class="segmented__main">
+              <app-icon class="operacion__icon" [name]="operaciones[tipo].icon" />
+              {{ operaciones[tipo].label }}
+            </span>
+            <span class="segmented__hint">{{ operaciones[tipo].hint }}</span>
+          </label>
+        }
+      </div>
+      <app-field-error id="movimiento-tipo-error" [control]="form.controls.tipoMovimiento" />
+    </div>
+
+    <div class="form-field form-field--full">
+      <label class="form-label" for="movimiento-valor">Valor</label>
+      <div class="input-money input-money--lg">
+        <input
+          id="movimiento-valor"
+          type="number"
+          class="form-control"
+          formControlName="valor"
+          min="0.01"
+          step="0.01"
+          placeholder="0.00"
+          aria-describedby="movimiento-valor-error"
+        />
+      </div>
+      <app-field-error
+        id="movimiento-valor-error"
+        [control]="form.controls.valor"
+        [messages]="messages.valor"
+      />
+    </div>
+  </div>
+
+  @if (preview(); as saldo) {
+    <div id="movimiento-cuenta-hint" class="ticket">
+      <div class="ticket__row">
+        <span>Saldo disponible</span>
+        <span class="text-numeric">{{ saldo.actual | money }}</span>
+      </div>
+      @if (saldo.cambio !== null && saldo.despues !== null) {
+        <div class="ticket__row ticket__row--change">
+          <span>{{ cambioLabel() }}</span>
+          <span
+            class="text-numeric"
+            [class.amount--credit]="saldo.cambio > 0"
+            [class.amount--debit]="saldo.cambio < 0"
+          >
+            {{ saldo.cambio | money: 'signed' }}
+          </span>
+        </div>
+        <div class="ticket__row ticket__row--total" [class.is-negative]="saldo.despues < 0">
+          <span>Saldo después</span>
+          <span class="text-numeric">{{ saldo.despues | money }}</span>
+        </div>
+      }
+      <p class="ticket__warning" aria-live="polite">
+        @if (saldo.despues !== null && saldo.despues < 0) {
+          <app-icon name="alert-circle" />
+          Saldo no disponible
+        }
+      </p>
+    </div>
+  }
+
+  @if (serverError(); as error) {
+    <app-error-alert
+      class="form-alert"
+      [message]="error.message"
+      [details]="unmatchedServerErrors()"
+    />
+  }
+
+  <div class="form-actions">
+    <button type="button" class="btn btn--secondary" (click)="cancelled.emit()">Cancelar</button>
+    <button type="submit" class="btn btn--primary" [disabled]="saving()">
+      @if (saving()) {
+        <app-spinner />
+      } @else {
+        <app-icon name="check" />
+      }
+      Guardar
+    </button>
+  </div>
+</form>

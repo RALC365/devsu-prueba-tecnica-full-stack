@@ -1,0 +1,48 @@
+@use 'media';
+
+.card {
+  background-color: var(--surface);
+  border: 1px solid rgb(11 27 46 / 5%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.page {
+  display: block;
+  max-width: var(--content-max);
+  margin-inline: auto;
+
+  // sin fill-mode: un transform que se queda aplicado volvería a la página
+  // el contenedor de los paneles fijos que viven adentro
+  @include media.motion {
+    animation: page-enter 360ms var(--ease-out);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.page-header__meta {
+  margin-top: 0.375rem;
+  color: var(--ink-500);
+  font-variant-numeric: tabular-nums;
+
+  strong {
+    font-weight: var(--weight-semibold);
+    color: var(--ink-800);
+  }
+
+  @include media.motion {
+    animation: meta-in 320ms var(--ease-out);
+  }
+}
+
+@keyframes meta-in {
+  from {
+    opacity: 0;
+  }
+}
