@@ -1,22 +1,18 @@
 # Banco
 
-Prueba técnica Full Stack (Java + Angular). Es una aplicación para administrar clientes, cuentas y movimientos de un banco, con un estado de cuenta por cliente y rango de fechas que se puede ver en pantalla o descargar en PDF.
+[![CI](https://github.com/RALC365/devsu-prueba-tecnica-full-stack/actions/workflows/ci.yml/badge.svg)](https://github.com/RALC365/devsu-prueba-tecnica-full-stack/actions/workflows/ci.yml)
 
-- `backend/`: API REST en Spring Boot (Java 21) con PostgreSQL.
-- `frontend/`: aplicación en Angular 22 que consume la API.
-- `BaseDatos.sql`: script con el esquema y las tablas.
-- `postman/Banco-API.postman_collection.json`: colección para validar los endpoints.
-- `docker-compose.yml`: levanta la base, la API y el frontend.
+Prueba técnica Full Stack (Java + Angular). API REST en Spring Boot para clientes, cuentas y movimientos, con estado de cuenta en JSON y PDF, y un frontend en Angular que la consume.
 
-## Cómo levantarlo
+![Pantalla de clientes](docs/capturas/clientes.png)
 
-Solo hace falta tener Docker. Desde la raíz del proyecto:
+## Levantarlo (opcional, para revalidar)
+
+Solo hace falta Docker. No hay que crear `.env`.
 
 ```bash
 docker compose up -d --build
 ```
-
-No hay que crear ningún `.env`, el `docker-compose.yml` ya trae los valores por defecto. La primera vez tarda unos minutos porque compila los dos proyectos. Cuando termine:
 
 | Qué | Dónde |
 |---|---|
@@ -24,81 +20,121 @@ No hay que crear ningún `.env`, el `docker-compose.yml` ya trae los valores por
 | API | http://localhost:8080/api |
 | Swagger | http://localhost:8080/swagger-ui.html |
 
-La base de datos se crea sola con `BaseDatos.sql` cuando arranca PostgreSQL por primera vez (queda expuesta en el puerto 5433). Para borrar todo y empezar de cero: `docker compose down -v`.
+Los datos de los casos de uso se cargan ejecutando en orden la colección `postman/Banco-API.postman_collection.json` (Runner de Postman) o con `npx newman run postman/Banco-API.postman_collection.json`.
 
-## Probar con Postman
+## Checklist del enunciado
 
-1. Importar `postman/Banco-API.postman_collection.json` en Postman.
-2. Ejecutar la colección completa, en orden, con el Runner.
-
-La colección crea los datos de los casos de uso del enunciado (José Lema, Marianela Montalvo, Juan Osorio, sus cuentas y movimientos) y verifica cada respuesta, incluidos los errores de "Saldo no disponible" y "Cupo diario Excedido". Usa la variable `baseUrl`, que apunta a `http://localhost:8080/api`.
-
-También se puede correr desde la terminal:
-
-```bash
-npx newman run postman/Banco-API.postman_collection.json
-```
-
-## Qué resuelve del enunciado
+### Indicaciones generales
 
 **Backend**
 
-- CRUD de clientes, cuentas y movimientos en `/api/clientes`, `/api/cuentas` y `/api/movimientos` (GET, POST, PUT, PATCH y DELETE).
-- `Persona` y `Cliente` con herencia: cliente hereda de persona y tiene su propia clave.
-- Los créditos se guardan en positivo y los débitos en negativo; cada movimiento queda con el saldo de la cuenta después de aplicarse.
-- Si el saldo no alcanza para un débito se responde **"Saldo no disponible"**.
-- El límite de retiro diario es de 1000 por cuenta (configurable con `BANCO_LIMITE_DIARIO_RETIRO`). Al superarlo se responde **"Cupo diario Excedido"**.
-- Estado de cuenta por cliente y rango de fechas en `/api/reportes?clienteId=1&fechaInicio=2022-02-01&fechaFin=2022-02-28`, en JSON. Con los mismos parámetros, `/api/reportes/pdf` devuelve el PDF en base64.
-- Pruebas unitarias (servicios, validaciones y controladores, empezando por los de clientes), de repositorio y de integración.
+- [x] Buenas prácticas y patrones: capas controller, service y repository; Repository con Spring Data JPA; DTOs con mappers; Strategy y Factory para los tipos de movimiento.
+- [x] Entidades con JPA (Hibernate).
+- [x] Mensajes de excepciones: un `@RestControllerAdvice` devuelve cada error como Problem Details (RFC 9457) con un `codigo` y el detalle por campo.
+- [x] Pruebas unitarias de endpoints: `ClienteControllerTest`, `CuentaControllerTest`, `MovimientoControllerTest` y `ReporteControllerTest`, dentro de 132 pruebas del backend.
+- [x] Desplegado en Docker.
 
 **Frontend**
 
-- El layout del mockup: encabezado con la marca, menú lateral y una pantalla por entidad.
-- CRUD de clientes, cuentas y movimientos con validaciones en pantalla, tanto las del formulario como las que devuelve la API.
-- Búsqueda rápida en todas las tablas.
-- Reporte con gráfico, resumen, tablas y botón para descargar el PDF.
-- Estilos propios, sin frameworks de estilos ni componentes prefabricados. Pruebas con Jest.
+- [x] Buenas prácticas (clean code, SOLID): componentes standalone, un store genérico para los CRUD, un interceptor para los errores y formularios tipados.
+- [x] Pruebas unitarias con Jest: 172 pruebas, 95 % de cobertura.
+- [x] Sin frameworks de estilos ni componentes prefabricados: todo el CSS es propio.
 
-## Detalles de la API
+### Entidades
 
-Los movimientos se envían con el valor en positivo y el tipo define si suma o resta:
+- [x] Persona: nombre, género, edad, identificación, dirección y teléfono, con su PK.
+- [x] Cliente hereda de Persona (herencia JOINED): clienteId, contraseña (guardada con BCrypt) y estado, con su PK.
+- [x] Cuenta: número, tipo, saldo inicial y estado, con su PK. El número de cuenta es único.
+- [x] Movimiento: fecha, tipo, valor y saldo, con su PK.
 
-```json
-{ "numeroCuenta": "478758", "tipoMovimiento": "DEBITO", "valor": 575 }
-```
+### Funcionalidades del backend
 
-Los errores siguen el formato Problem Details (RFC 9457) e incluyen un `codigo`. En los de validación viene el detalle por campo en `errores`.
+- [x] CRUD con GET, POST, PUT, PATCH y DELETE en `/api/clientes`, `/api/cuentas` y `/api/movimientos`.
 
-Otras reglas:
+  ![Swagger](docs/capturas/swagger.png)
 
-- Al registrar un movimiento se bloquea la fila de la cuenta, así dos retiros al mismo tiempo no pueden usar el mismo saldo.
-- Si se edita o elimina un movimiento se recalculan los saldos siguientes; si alguno queda negativo, el cambio no se aplica.
-- No se puede eliminar un cliente con cuentas ni una cuenta con movimientos. Los clientes o cuentas inactivos no pueden registrar movimientos.
-- Las contraseñas se guardan con BCrypt y nunca se devuelven.
+- [x] Los créditos se guardan en positivo y los débitos en negativo; cada movimiento guarda el saldo disponible con el que queda la cuenta.
+- [x] Débito sin saldo: "Saldo no disponible". El formulario lo anticipa antes de guardar y el recuadro rojo es la respuesta de la API.
 
-## Sin Docker
+  ![Saldo no disponible](docs/capturas/saldo-no-disponible.png)
 
-Backend (JDK 21). Por defecto se conecta a `localhost:5433`, así que se puede levantar solo la base con Docker:
+- [x] Límite de retiro diario de 1000 como parámetro (`BANCO_LIMITE_DIARIO_RETIRO`). Al superarlo: "Cupo diario Excedido".
 
-```bash
-docker compose up -d db
-cd backend
-./mvnw spring-boot:run
-```
+  ![Cupo diario Excedido](docs/capturas/cupo-diario-excedido.png)
 
-Frontend (Node 24). El servidor de desarrollo redirige `/api` al backend en el puerto 8080:
+- [x] Estado de cuenta por cliente y rango de fechas, con las cuentas, sus saldos y el total de créditos y débitos, en JSON y en PDF (base64):
+  - `GET /api/reportes?clienteId=2&fechaInicio=2026-10-01&fechaFin=2026-10-10`
+  - `GET /api/reportes/pdf` con los mismos parámetros
 
-```bash
-cd frontend
-npm install
-npm start
-```
+  Cada movimiento del reporte trae los campos del ejemplo del enunciado:
+
+  ```json
+  {
+    "fecha": "2026-10-10T17:56:09",
+    "cliente": "Marianela Montalvo",
+    "numeroCuenta": "225487",
+    "tipoCuenta": "CORRIENTE",
+    "saldoInicial": 100,
+    "estado": true,
+    "tipoMovimiento": "CREDITO",
+    "movimiento": 600,
+    "saldoDisponible": 700
+  }
+  ```
+
+### Casos de uso
+
+- [x] Los cinco casos del enunciado (usuarios, cuentas, la nueva cuenta corriente de Jose Lema, los movimientos y el listado por fechas) se crean al correr la colección de Postman. También están en la prueba de integración `CasosDeUsoIntegrationTest`.
+
+  ![Cuentas](docs/capturas/cuentas.png)
+
+  ![Movimientos](docs/capturas/movimientos.png)
+
+### Funcionalidades del frontend
+
+- [x] Layout del mockup adaptado: encabezado, menú lateral y una pantalla por entidad (captura de arriba).
+- [x] CRUD de clientes, cuentas y movimientos: crear y editar en un panel lateral, eliminar con confirmación.
+- [x] Reporte visual con resumen, gráfico y tablas, y botón para descargar el PDF.
+
+  ![Reporte](docs/capturas/reporte.png)
+
+  ![PDF del estado de cuenta](docs/capturas/reporte-pdf.png)
+
+- [x] Búsqueda rápida en todas las tablas, por cualquier columna.
+
+  ![Búsqueda rápida](docs/capturas/busqueda.png)
+
+- [x] Mensajes de validación en pantalla, tanto los del formulario como los que devuelve la API (capturas de saldo y cupo).
+
+  ![Validaciones](docs/capturas/cliente-validaciones.png)
+
+### Extras
+
+- [x] Lambdas y programación funcional: streams y Optional en el backend; signals y RxJS en el frontend.
+- [x] Exception handlers (`@RestControllerAdvice`).
+- [x] Validación de atributos a nivel de modelo con Bean Validation, más validadores propios.
+- [x] Patrones de diseño: Strategy, Factory, Repository y MVC.
+
+### Despliegue y entregables
+
+- [x] `BaseDatos.sql` con el esquema completo; PostgreSQL lo ejecuta al crear el contenedor.
+- [x] Solución desplegada con Docker Compose (base, API y frontend).
+- [x] Colección de Postman con 52 peticiones y 105 verificaciones. El workflow de GitHub Actions la corre contra Docker en cada push.
+- [x] Repositorio público, .zip y JSON de Postman.
 
 ## Pruebas
 
 ```bash
-cd backend && ./mvnw verify
-cd frontend && npm test
+cd backend && ./mvnw verify   # 132 pruebas; falla si la cobertura baja del 85 %
+cd frontend && npm test       # 172 pruebas con Jest
 ```
 
-El build del backend falla si la cobertura baja del 85 %. El workflow de GitHub Actions corre las pruebas de los dos proyectos, levanta todo con Docker Compose y ejecuta la colección de Postman contra esa instalación. En `k8s/` hay manifiestos básicos para Kubernetes.
+## Sin Docker
+
+Backend con JDK 21 (usa la base del contenedor en `localhost:5433`) y frontend con Node 24:
+
+```bash
+docker compose up -d db
+cd backend && ./mvnw spring-boot:run
+cd frontend && npm install && npm start
+```
