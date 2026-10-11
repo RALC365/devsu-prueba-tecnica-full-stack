@@ -1,36 +1,84 @@
 # Banco
 
-Prueba técnica Full Stack (Java + Angular). Es una API en Spring Boot para manejar clientes, cuentas y movimientos, con un reporte de estado de cuenta en JSON y en PDF, y un frontend en Angular que la consume.
+Prueba técnica Full Stack (Java + Angular). Es una aplicación para administrar clientes, cuentas y movimientos de un banco, con un estado de cuenta por cliente y rango de fechas que se puede ver en pantalla o descargar en PDF.
 
-## Tecnologías
-
-- Backend: Java 21, Spring Boot 4.1, Spring Data JPA, PostgreSQL 17
-- Frontend: Angular 22, pruebas con Jest
-- Docker y Docker Compose
+- `backend/`: API REST en Spring Boot (Java 21) con PostgreSQL.
+- `frontend/`: aplicación en Angular 22 que consume la API.
+- `BaseDatos.sql`: script con el esquema y las tablas.
+- `postman/Banco-API.postman_collection.json`: colección para validar los endpoints.
+- `docker-compose.yml`: levanta la base, la API y el frontend.
 
 ## Cómo levantarlo
+
+Solo hace falta tener Docker. Desde la raíz del proyecto:
 
 ```bash
 docker compose up -d --build
 ```
 
-No hace falta crear un `.env`: el `docker-compose.yml` ya trae valores por defecto (el `.env.example` es solo para cambiarlos).
+No hay que crear ningún `.env`, el `docker-compose.yml` ya trae los valores por defecto. La primera vez tarda unos minutos porque compila los dos proyectos. Cuando termine:
 
-- Frontend: http://localhost:4200
-- API: http://localhost:8080/api
-- Swagger: http://localhost:8080/swagger-ui.html
+| Qué | Dónde |
+|---|---|
+| Aplicación | http://localhost:4200 |
+| API | http://localhost:8080/api |
+| Swagger | http://localhost:8080/swagger-ui.html |
 
-La base se crea con `BaseDatos.sql` la primera vez que arranca el contenedor de PostgreSQL (queda en el puerto 5433 del host). Para empezar de cero: `docker compose down -v`.
+La base de datos se crea sola con `BaseDatos.sql` cuando arranca PostgreSQL por primera vez (queda expuesta en el puerto 5433). Para borrar todo y empezar de cero: `docker compose down -v`.
 
-Los datos de los casos de uso del enunciado se cargan con la colección de Postman (`postman/`), ejecutándola en orden con el Runner o con newman:
+## Probar con Postman
+
+1. Importar `postman/Banco-API.postman_collection.json` en Postman.
+2. Ejecutar la colección completa, en orden, con el Runner.
+
+La colección crea los datos de los casos de uso del enunciado (José Lema, Marianela Montalvo, Juan Osorio, sus cuentas y movimientos) y verifica cada respuesta, incluidos los errores de "Saldo no disponible" y "Cupo diario Excedido". Usa la variable `baseUrl`, que apunta a `http://localhost:8080/api`.
+
+También se puede correr desde la terminal:
 
 ```bash
 npx newman run postman/Banco-API.postman_collection.json
 ```
 
-### Sin Docker
+## Qué resuelve del enunciado
 
-Backend (JDK 21). Por defecto se conecta a `localhost:5433`, así que se puede usar solo el contenedor de la base:
+**Backend**
+
+- CRUD de clientes, cuentas y movimientos en `/api/clientes`, `/api/cuentas` y `/api/movimientos` (GET, POST, PUT, PATCH y DELETE).
+- `Persona` y `Cliente` con herencia: cliente hereda de persona y tiene su propia clave.
+- Los créditos se guardan en positivo y los débitos en negativo; cada movimiento queda con el saldo de la cuenta después de aplicarse.
+- Si el saldo no alcanza para un débito se responde **"Saldo no disponible"**.
+- El límite de retiro diario es de 1000 por cuenta (configurable con `BANCO_LIMITE_DIARIO_RETIRO`). Al superarlo se responde **"Cupo diario Excedido"**.
+- Estado de cuenta por cliente y rango de fechas en `/api/reportes?clienteId=1&fechaInicio=2022-02-01&fechaFin=2022-02-28`, en JSON. Con los mismos parámetros, `/api/reportes/pdf` devuelve el PDF en base64.
+- Pruebas unitarias (servicios, validaciones y controladores, empezando por los de clientes), de repositorio y de integración.
+
+**Frontend**
+
+- El layout del mockup: encabezado con la marca, menú lateral y una pantalla por entidad.
+- CRUD de clientes, cuentas y movimientos con validaciones en pantalla, tanto las del formulario como las que devuelve la API.
+- Búsqueda rápida en todas las tablas.
+- Reporte con gráfico, resumen, tablas y botón para descargar el PDF.
+- Estilos propios, sin frameworks de estilos ni componentes prefabricados. Pruebas con Jest.
+
+## Detalles de la API
+
+Los movimientos se envían con el valor en positivo y el tipo define si suma o resta:
+
+```json
+{ "numeroCuenta": "478758", "tipoMovimiento": "DEBITO", "valor": 575 }
+```
+
+Los errores siguen el formato Problem Details (RFC 9457) e incluyen un `codigo`. En los de validación viene el detalle por campo en `errores`.
+
+Otras reglas:
+
+- Al registrar un movimiento se bloquea la fila de la cuenta, así dos retiros al mismo tiempo no pueden usar el mismo saldo.
+- Si se edita o elimina un movimiento se recalculan los saldos siguientes; si alguno queda negativo, el cambio no se aplica.
+- No se puede eliminar un cliente con cuentas ni una cuenta con movimientos. Los clientes o cuentas inactivos no pueden registrar movimientos.
+- Las contraseñas se guardan con BCrypt y nunca se devuelven.
+
+## Sin Docker
+
+Backend (JDK 21). Por defecto se conecta a `localhost:5433`, así que se puede levantar solo la base con Docker:
 
 ```bash
 docker compose up -d db
@@ -46,33 +94,6 @@ npm install
 npm start
 ```
 
-## Endpoints
-
-| Recurso | Ruta |
-|---|---|
-| Clientes | `/api/clientes` |
-| Cuentas | `/api/cuentas` (opcional `?clienteId=`) |
-| Movimientos | `/api/movimientos` (opcional `?numeroCuenta=`) |
-| Reporte | `/api/reportes?clienteId=1&fechaInicio=2022-02-01&fechaFin=2022-02-28` |
-| Reporte en PDF | `/api/reportes/pdf` con los mismos parámetros (el PDF viene en base64) |
-
-Clientes, cuentas y movimientos aceptan GET, POST, PUT, PATCH y DELETE. Los errores se devuelven como Problem Details (RFC 9457) con un campo `codigo`, y en los de validación viene el detalle por campo en `errores`.
-
-En los movimientos el valor se envía positivo y el tipo define si suma o resta:
-
-```json
-{ "numeroCuenta": "478758", "tipoMovimiento": "DEBITO", "valor": 575 }
-```
-
-## Reglas
-
-- Los créditos se guardan con valor positivo y los débitos con valor negativo. Cada movimiento guarda el saldo con el que queda la cuenta.
-- Si el saldo no alcanza para un débito se responde "Saldo no disponible".
-- El límite de retiro diario es 1000 por cuenta (variable `BANCO_LIMITE_DIARIO_RETIRO`). Si se supera se responde "Cupo diario Excedido".
-- Al registrar un movimiento se bloquea la fila de la cuenta (`SELECT ... FOR UPDATE`), así dos retiros simultáneos no pueden usar el mismo saldo.
-- Si se edita o elimina un movimiento se recalculan los saldos siguientes; si alguno queda negativo el cambio no se aplica.
-- No se puede eliminar un cliente con cuentas ni una cuenta con movimientos, y las cuentas o clientes inactivos no pueden hacer movimientos.
-
 ## Pruebas
 
 ```bash
@@ -80,12 +101,4 @@ cd backend && ./mvnw verify
 cd frontend && npm test
 ```
 
-En el backend hay pruebas unitarias, de controladores, de repositorio y de integración, y el build falla si la cobertura baja del 85 %. El workflow de GitHub Actions corre las pruebas de los dos proyectos, levanta todo con Docker Compose y ejecuta la colección de Postman contra esa instalación.
-
-## Notas
-
-- `Persona` y `Cliente` usan herencia JOINED: persona tiene su propia PK y cliente usa la misma como PK y FK.
-- El esquema se crea con `BaseDatos.sql`; Hibernate solo lo valida al arrancar.
-- Los tipos de movimiento se manejan con el patrón Strategy (`CreditoStrategy` y `DebitoStrategy`).
-- Las contraseñas se guardan con BCrypt y no se devuelven en ninguna respuesta.
-- En `k8s/` hay manifiestos básicos para Kubernetes.
+El build del backend falla si la cobertura baja del 85 %. El workflow de GitHub Actions corre las pruebas de los dos proyectos, levanta todo con Docker Compose y ejecuta la colección de Postman contra esa instalación. En `k8s/` hay manifiestos básicos para Kubernetes.
